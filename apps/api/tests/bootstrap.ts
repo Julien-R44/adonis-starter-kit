@@ -2,8 +2,12 @@ import type { Config } from '@japa/runner/types'
 
 import { pluginAdonisJS } from '@japa/plugin-adonisjs'
 import { assert } from '@japa/assert'
+import { apiClient } from '@japa/api-client'
+import { urlFor } from '@adonisjs/core/services/url_builder'
 import testUtils from '@adonisjs/core/services/test_utils'
 import app from '@adonisjs/core/services/app'
+
+import { registry } from '../.adonisjs/client/registry.js'
 
 /**
  * This file is imported by the "bin/test.ts" entrypoint file
@@ -13,7 +17,19 @@ import app from '@adonisjs/core/services/app'
  * Configure Japa plugins in the plugins array.
  * Learn more - https://japa.dev/docs/runner-config#plugins-optional
  */
-export const plugins: Config['plugins'] = [assert(), pluginAdonisJS(app)]
+export const plugins: Config['plugins'] = [
+  assert(),
+  pluginAdonisJS(app),
+  apiClient({
+    registry: registry.routes,
+    patternSerializer: (pattern: any, params) => urlFor(pattern, params),
+  }),
+]
+
+type RegistryRoutes = typeof registry.routes
+declare module '@japa/api-client/types' {
+  interface UserRoutesRegistry extends RegistryRoutes {}
+}
 
 /**
  * Configure lifecycle function to run before and after all the
